@@ -5,9 +5,6 @@ from pytorch_lightning import LightningDataModule
 from transformers import PreTrainedTokenizer
 from datasets import load_dataset
 
-import sys
-
-sys.path.append("/home/hoang/Workspace/transformer-translator/src/")
 from utils.text_processing import fix_contents
 
 
@@ -33,13 +30,13 @@ class Iwlst2015DataModule(LightningDataModule):
         data_path = "mt_eng_vietnamese"
         data_name = "iwslt2015-vi-en"
 
-        # self.train_dataset = load_dataset(data_path, data_name, split="train")
+        self.train_dataset = load_dataset(data_path, data_name, split="train")
         self.val_dataset = load_dataset(data_path, data_name, split="validation")
-        self.train_dataset = load_dataset(data_path, data_name, split="test")
+        # self.train_dataset = load_dataset(data_path, data_name, split="test")
 
-        # self.train_dataset = self._preprocessing_and_tokenize(self.train_dataset)
-        self.val_dataset = self._preprocessing_and_tokenize(self.val_dataset)
         self.train_dataset = self._preprocessing_and_tokenize(self.train_dataset)
+        self.val_dataset = self._preprocessing_and_tokenize(self.val_dataset)
+        # self.train_dataset = self._preprocessing_and_tokenize(self.train_dataset)
 
     def _preprocessing_and_tokenize(self, dataset):
         dataset.set_format(type="torch")
