@@ -6,25 +6,26 @@ TGT_MODEL_NAME = "vinai/phobert-base"
 
 model = dict(
     d_model=D_MODEL,
-    encoder_config=dict(
-        layer_config=dict(
-            attention_config=dict(
-                d_model=D_MODEL,
-                num_heads=8,
-                dropout=0.1,
-            ),
-            intermediate_config=dict(
-                d_model=D_MODEL,
-                d_intermediate=D_MODEL * 4,
-                dropout=0.1,
-            ),
-        ),
-        pos_encoding_config=dict(
-            max_seq_len=MAX_SEQ_LEN,
-            dropout=0.1,
-        ),
-        num_layers=6,
-    ),
+    pretrained_encoder=SRC_MODEL_NAME,
+    # encoder_config=dict(
+    #     layer_config=dict(
+    #         attention_config=dict(
+    #             d_model=D_MODEL,
+    #             num_heads=8,
+    #             dropout=0.1,
+    #         ),
+    #         intermediate_config=dict(
+    #             d_model=D_MODEL,
+    #             d_intermediate=D_MODEL * 4,
+    #             dropout=0.1,
+    #         ),
+    #     ),
+    #     pos_encoding_config=dict(
+    #         max_seq_len=MAX_SEQ_LEN,
+    #         dropout=0.1,
+    #     ),
+    #     num_layers=6,
+    # ),
     decoder_config=dict(
         layer_config=dict(
             attention_config=dict(
