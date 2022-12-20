@@ -60,6 +60,9 @@ class Translator(LightningModule):
         src_embedding = self.src_embedding(src_token_ids) * math.sqrt(self.d_model)
         tgt_embedding = self.tgt_embedding(tgt_token_ids) * math.sqrt(self.d_model)
 
+        src_attention_mask = src_attention_mask.bool()
+        tgt_attention_mask = tgt_attention_mask.bool()
+
         decoder_output = self.transformer(
             src_embedding,
             tgt_embedding,
