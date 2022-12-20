@@ -46,8 +46,8 @@ model = dict(
         num_layers=6,
     ),
     adamw_config=dict(
-        lr=1e-3,
-        finetune_lr=5e-5,
+        lr=4e-4,
+        finetune_lr=1e-5,
         weight_decay=1e-4,
     ),
     scheduler_config=dict(

@@ -126,7 +126,7 @@ class Translator(LightningModule):
             {"params": self.linear.parameters(), "lr": self.adamw_config["lr"]},
         ]
 
-        optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.Adam(
             param_groups, weight_decay=self.adamw_config["weight_decay"]
         )
         scheduler = torch.optim.lr_scheduler.ExponentialLR(
