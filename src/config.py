@@ -49,7 +49,7 @@ model = dict(
         lr=1e-3,
         weight_decay=1e-4,
     ),
-    warmup_scheduler_config=dict(
+    scheduler_config=dict(
         gamma=0.9,
     ),
 )
