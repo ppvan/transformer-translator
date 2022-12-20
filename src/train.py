@@ -34,7 +34,7 @@ def main():
         accelerator=args.accelerator,
         max_epochs=args.max_epochs,
         callbacks=[
-            ModelCheckpoint(args.ckpt_dir, monitor="val/loss", mode="min"),
+            ModelCheckpoint(args.ckpt_dir, monitor="val/loss", mode="min", save_last=True),
             LearningRateMonitor(logging_interval="step"),
         ],
         logger=WandbLogger(project="Machine Translation", name="Transformer", version=0),
