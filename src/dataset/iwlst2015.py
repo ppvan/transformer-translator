@@ -41,14 +41,10 @@ class Iwlst2015DataModule(LightningDataModule):
     def _preprocessing_and_tokenize(self, dataset):
         dataset.set_format(type="torch")
 
-        def fix_en_seq(item):
+        def tokenize(item):
+            # preprocess
             item["translation"]["en"] = fix_contents(item["translation"]["en"])
 
-            return item
-
-        dataset = dataset.map(fix_en_seq)
-
-        def tokenize(item):
             item["en"] = self.en_tokenizer(
                 item["translation"]["en"],
                 truncation=True,
