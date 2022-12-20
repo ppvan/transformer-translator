@@ -2,11 +2,12 @@ from .transformer import Encoder, Decoder
 from utils.scheduler import WarmUpScheduler
 
 from typing import Optional
+import math
 import torch
 from torch import nn
 from pytorch_lightning import LightningModule
 from torchmetrics import MeanMetric
-from transformers import PreTrainedTokenizer, AutoModel
+from transformers import PreTrainedTokenizer
 
 
 class Translator(LightningModule):
@@ -29,13 +30,19 @@ class Translator(LightningModule):
         self.src_tokenizer = src_tokenizer
         self.tgt_tokenizer = tgt_tokenizer
 
-        self.encoder = AutoModel.from_pretrained(pretrained_encoder)
-        self.decoder = Decoder(
-            vocab_size=tgt_tokenizer.vocab_size,
-            padding_idx=tgt_tokenizer.pad_token_id,
-            d_model=d_model,
-            **decoder_config
+        self.src_embedding = nn.Embedding(
+            num_embeddings=src_tokenizer.vocab_size,
+            embedding_dim=d_model,
+            padding_idx=src_tokenizer.pad_token_id,
         )
+
+        self.tgt_embedding = nn.Embedding(
+            num_embeddings=tgt_tokenizer.vocab_size,
+            embedding_dim=d_model,
+            padding_idx=tgt_tokenizer.pad_token_id,
+        )
+
+        self.transformer = nn.Transformer(self.d_model, nhead=8, batch_first=True)
 
         self.linear = nn.Linear(d_model, tgt_tokenizer.vocab_size)
 
@@ -47,16 +54,17 @@ class Translator(LightningModule):
         self,
         src_token_ids: torch.Tensor,
         tgt_token_ids: torch.Tensor,
-        src_attention_mask: Optional[torch.Tensor] = None,
-        tgt_attention_mask: Optional[torch.Tensor] = None,
+        src_attention_mask: Optional[torch.BoolTensor] = None,
+        tgt_attention_mask: Optional[torch.BoolTensor] = None,
     ):
-        # encoder_output = self.encoder(src_token_ids, src_attention_mask)
-        encoder_output = self.encoder(src_token_ids, attention_mask=src_attention_mask)[
-            "last_hidden_state"
-        ]
+        src_embedding = self.src_embedding(src_token_ids) * math.sqrt(self.d_model)
+        tgt_embedding = self.tgt_embedding(tgt_token_ids) * math.sqrt(self.d_model)
 
-        decoder_output = self.decoder(
-            tgt_token_ids, encoder_output, src_attention_mask, tgt_attention_mask
+        decoder_output = self.transformer(
+            src_embedding,
+            tgt_embedding,
+            src_key_padding_mask=(~src_attention_mask),
+            tgt_key_padding_mask=(~tgt_attention_mask),
         )
 
         logits = self.linear(decoder_output)
@@ -123,7 +131,10 @@ class Translator(LightningModule):
 
     def configure_optimizers(self):
         param_groups = [
-            {"params": self.encoder.parameters(), "lr": self.adamw_config["finetune_lr"]},
+            {
+                "params": self.encoder.parameters(),
+                "lr": self.adamw_config["finetune_lr"],
+            },
             {"params": self.decoder.parameters(), "lr": self.adamw_config["lr"]},
             {"params": self.linear.parameters(), "lr": self.adamw_config["lr"]},
         ]

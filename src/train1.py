@@ -1,4 +1,4 @@
-from model import Translator
+from model.translator1 import Translator
 from dataset import Iwlst2015DataModule
 import config
 

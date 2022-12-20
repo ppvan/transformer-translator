@@ -30,7 +30,7 @@ class Iwlst2015DataModule(LightningDataModule):
         data_path = "mt_eng_vietnamese"
         data_name = "iwslt2015-vi-en"
 
-        self.train_dataset = load_dataset(data_path, data_name, split="train")
+        self.train_dataset = load_dataset(data_path, data_name, split="test")
         self.val_dataset = load_dataset(data_path, data_name, split="validation")
         # self.train_dataset = load_dataset(data_path, data_name, split="test")
 
