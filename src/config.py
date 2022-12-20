@@ -50,6 +50,6 @@ model = dict(
         weight_decay=1e-4,
     ),
     warmup_scheduler_config=dict(
-        warmup_steps=4000,
+        gamma=0.9,
     ),
 )

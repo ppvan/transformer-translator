@@ -18,12 +18,12 @@ class Translator(LightningModule):
         decoder_config: dict,
         d_model: int,
         adamw_config: dict,
-        warmup_scheduler_config: dict,
+        scheduler_config: dict,
     ):
         super().__init__()
 
         self.adamw_config = adamw_config
-        self.warmup_scheduler_config = warmup_scheduler_config
+        self.scheduler_config = scheduler_config
         self.d_model = d_model
 
         self.src_tokenizer = src_tokenizer
@@ -120,16 +120,22 @@ class Translator(LightningModule):
         self.log("val/loss", avg_loss, on_epoch=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), **self.adamw_config)
-        scheduler = WarmUpScheduler(
-            optimizer, feature_size=self.d_model, **self.warmup_scheduler_config
+        param_groups = [
+            {"params": self.encoder.parameters(), "lr": self.adamw_config["lr"] * 0.1},
+            {"params": self.decoder.parameters(), "lr": self.adamw_config["lr"]},
+            {"params": self.linear.parameters(), "lr": self.adamw_config["lr"]},
+        ]
+
+        optimizer = torch.optim.AdamW(param_groups, **self.adamw_config)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(
+            optimizer, **self.scheduler_config
         )
 
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "interval": "step",
+                "interval": "epoch",
             },
         }
 
