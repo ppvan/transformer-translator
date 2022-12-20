@@ -130,3 +130,6 @@ dmypy.json
 
 # Logger
 wandb/
+
+# Checkpoints
+checkpoints/*.ckpt

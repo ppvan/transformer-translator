@@ -92,10 +92,11 @@ class Iwlst2015DataModule(LightningDataModule):
             input_ids = item["en"]["input_ids"]
             attention_mask = item["en"]["attention_mask"]
 
+            # padding to the left of the sequence to match the max length
             ret["src"]["input_ids"].append(
                 F.pad(
                     input_ids,
-                    (0, max_src_len - input_ids.size(1)),
+                    (max_src_len - input_ids.size(1), 0),
                     value=self.en_tokenizer.pad_token_id,
                 )
             )
@@ -103,7 +104,7 @@ class Iwlst2015DataModule(LightningDataModule):
             ret["src"]["attention_mask"].append(
                 F.pad(
                     attention_mask,
-                    (0, max_src_len - attention_mask.size(1)),
+                    (max_src_len - attention_mask.size(1), 0),
                     value=0,
                 )
             )
@@ -114,7 +115,7 @@ class Iwlst2015DataModule(LightningDataModule):
             ret["tgt"]["input_ids"].append(
                 F.pad(
                     input_ids,
-                    (0, max_tgt_len - input_ids.size(1)),
+                    (max_tgt_len - input_ids.size(1), 0),
                     value=self.vi_tokenizer.pad_token_id,
                 )
             )
@@ -122,7 +123,7 @@ class Iwlst2015DataModule(LightningDataModule):
             ret["tgt"]["attention_mask"].append(
                 F.pad(
                     attention_mask,
-                    (0, max_tgt_len - attention_mask.size(1)),
+                    (max_tgt_len - attention_mask.size(1), 0),
                     value=0,
                 )
             )

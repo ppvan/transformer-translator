@@ -133,3 +133,38 @@ class Translator(LightningModule):
                 "interval": "step",
             },
         }
+
+    def greedy_translate(self, text: str, max_translation_length: int = 100):
+        src_token_ids, src_attention_mask = self.src_tokenizer(
+            text, return_token_type_ids=False, return_tensors="pt"
+        ).values()
+
+        src_token_ids = src_token_ids.to(self.device)
+        src_attention_mask = src_attention_mask.to(self.device)
+
+        tgt_token_ids = torch.tensor(
+            [[self.tgt_tokenizer.cls_token_id]], device=self.device
+        )
+        tgt_attention_mask = torch.tensor([[1]], device=self.device)
+
+        for _ in range(max_translation_length):
+            logits = self(
+                src_token_ids, tgt_token_ids, src_attention_mask, tgt_attention_mask
+            )
+
+            next_tgt_token_id = torch.argmax(logits[:, -1, :], keepdim=True, dim=-1)
+            tgt_token_ids = torch.cat([tgt_token_ids, next_tgt_token_id], dim=-1)
+            tgt_attention_mask = torch.cat(
+                [
+                    tgt_attention_mask,
+                    torch.ones_like(next_tgt_token_id, dtype=torch.int64)
+                    if next_tgt_token_id != self.tgt_tokenizer.pad_token_id
+                    else torch.zeros_like(next_tgt_token_id, dtype=torch.int64),
+                ],
+                dim=-1,
+            )
+
+            if next_tgt_token_id == self.tgt_tokenizer.sep_token_id:
+                break
+
+        return self.tgt_tokenizer.decode(tgt_token_ids[0], skip_special_tokens=True)
