@@ -47,6 +47,7 @@ model = dict(
     ),
     adamw_config=dict(
         lr=1e-3,
+        finetune_lr=5e-5,
         weight_decay=1e-4,
     ),
     scheduler_config=dict(
