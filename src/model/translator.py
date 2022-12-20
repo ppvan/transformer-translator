@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from pytorch_lightning import LightningModule
 from torchmetrics import MeanMetric
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedTokenizer, AutoModel
 
 
 class Translator(LightningModule):
@@ -14,7 +14,7 @@ class Translator(LightningModule):
         self,
         src_tokenizer: PreTrainedTokenizer,
         tgt_tokenizer: PreTrainedTokenizer,
-        encoder_config: dict,
+        pretrained_encoder: str,
         decoder_config: dict,
         d_model: int,
         adamw_config: dict,
@@ -29,12 +29,7 @@ class Translator(LightningModule):
         self.src_tokenizer = src_tokenizer
         self.tgt_tokenizer = tgt_tokenizer
 
-        self.encoder = Encoder(
-            vocab_size=src_tokenizer.vocab_size,
-            padding_idx=src_tokenizer.pad_token_id,
-            d_model=d_model,
-            **encoder_config
-        )
+        self.encoder = AutoModel.from_pretrained(pretrained_encoder)
         self.decoder = Decoder(
             vocab_size=tgt_tokenizer.vocab_size,
             padding_idx=tgt_tokenizer.pad_token_id,
@@ -55,7 +50,11 @@ class Translator(LightningModule):
         src_attention_mask: Optional[torch.Tensor] = None,
         tgt_attention_mask: Optional[torch.Tensor] = None,
     ):
-        encoder_output = self.encoder(src_token_ids, src_attention_mask)
+        # encoder_output = self.encoder(src_token_ids, src_attention_mask)
+        encoder_output = self.encoder(src_token_ids, attention_mask=src_attention_mask)[
+            "last_hidden_state"
+        ]
+
         decoder_output = self.decoder(
             tgt_token_ids, encoder_output, src_attention_mask, tgt_attention_mask
         )
