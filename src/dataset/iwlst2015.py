@@ -30,7 +30,7 @@ class Iwlst2015DataModule(LightningDataModule):
         data_path = "mt_eng_vietnamese"
         data_name = "iwslt2015-vi-en"
 
-        self.train_dataset = load_dataset(data_path, data_name, split="test")
+        self.train_dataset = load_dataset(data_path, data_name, split="train")
         self.val_dataset = load_dataset(data_path, data_name, split="validation")
         # self.train_dataset = load_dataset(data_path, data_name, split="test")
 
@@ -41,22 +41,40 @@ class Iwlst2015DataModule(LightningDataModule):
     def _preprocessing_and_tokenize(self, dataset):
         dataset.set_format(type="torch")
 
-        def tokenize(item):
-            # preprocess
+        print("Reformatting text...")
+
+        def preprocess(item):
             item["translation"]["en"] = fix_contents(item["translation"]["en"])
 
+            return item
+
+        dataset = dataset.map(preprocess)
+
+        # drop too long sequences
+        print("Dropping long sequences...")
+
+        def is_long_sequence(item):
+            en_sequence = item["translation"]["en"]
+            vi_sequence = item["translation"]["vi"]
+
+            return (
+                len(self.en_tokenizer.encode(en_sequence)) <= self.max_length
+                and len(self.vi_tokenizer.encode(vi_sequence)) <= self.max_length
+            )
+
+        dataset = dataset.filter(is_long_sequence)
+
+        print("Tokenizing sequences...")
+
+        def tokenize(item):
             item["en"] = self.en_tokenizer(
                 item["translation"]["en"],
-                truncation=True,
-                max_length=self.max_length,
                 return_token_type_ids=False,
                 return_tensors="pt",
             )
 
             item["vi"] = self.vi_tokenizer(
                 item["translation"]["vi"],
-                truncation=True,
-                max_length=self.max_length,
                 return_token_type_ids=False,
                 return_tensors="pt",
             )

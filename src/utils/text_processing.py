@@ -11,5 +11,6 @@ def fix_contents(text: str):
     text = re.sub("&apos;ve", "have", text)
     text = re.sub("&apos;ll", "will", text)
     text = re.sub("&apos;t", "not", text)
+    text = re.sub("&quot;", '"', text)
 
     return text

@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 
@@ -98,7 +99,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: torch.Tensor, attention_mask: torch.Tensor = None):
         # (batch_size, seq_len, d_model)
-        x = self.embedding(x)
+        x = self.embedding(x) * math.sqrt(x.size(-1))
         x = self.pos_encoding(x)
 
         if attention_mask is not None:
@@ -187,7 +188,7 @@ class Decoder(nn.Module):
         dec_attention_mask: torch.Tensor = None,
     ):
         # (batch_size, seq_len, d_model)
-        x = self.embedding(x)
+        x = self.embedding(x) * math.sqrt(x.size(-1))
         x = self.pos_encoding(x)
 
         # create cross attention mask
