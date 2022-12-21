@@ -45,9 +45,9 @@ class MultiHeadAttention(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        nn.init.xavier_uniform_(self.proj_q)
-        nn.init.xavier_uniform_(self.proj_k)
-        nn.init.xavier_uniform_(self.proj_k)
+        nn.init.xavier_uniform_(self.proj_q.weight)
+        nn.init.xavier_uniform_(self.proj_k.weight)
+        nn.init.xavier_uniform_(self.proj_k.weight)
 
     def _split_heads(self, x: torch.Tensor):
         # x.shape == (batch_size, seq_len, d_model)
