@@ -33,14 +33,21 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = d_model // num_heads
         self._attn_scale_factor = math.sqrt(self.head_dim)
 
-        self.proj_q = nn.Linear(d_model, d_model)
-        self.proj_k = nn.Linear(d_model, d_model)
-        self.proj_v = nn.Linear(d_model, d_model)
+        self.proj_q = nn.Linear(d_model, d_model, bias=False)
+        self.proj_k = nn.Linear(d_model, d_model, bias=False)
+        self.proj_v = nn.Linear(d_model, d_model, bias=False)
 
         self.dropout = nn.Dropout(p=dropout, inplace=True)
         self.layernorm = nn.LayerNorm(d_model)
 
         self.proj_o = nn.Linear(d_model, d_model)
+
+        self.init_weights()
+
+    def init_weights(self):
+        nn.init.xavier_uniform_(self.proj_q)
+        nn.init.xavier_uniform_(self.proj_k)
+        nn.init.xavier_uniform_(self.proj_k)
 
     def _split_heads(self, x: torch.Tensor):
         # x.shape == (batch_size, seq_len, d_model)
@@ -84,7 +91,10 @@ class MultiHeadAttention(nn.Module):
             mask = self._get_query_key_mask(mask)
             attn_scores = attn_scores + (1 - mask) * -1e9
 
-        attn_probs = torch.softmax(attn_scores, dim=-1)
+        attn_probs = torch.softmax(
+            attn_scores - attn_scores.max(-1, keepdim=True), dim=-1
+        )  # stable softmax
+        attn_probs = self.dropout(attn_probs)
         attn_outputs = torch.matmul(attn_probs, v)
 
         return attn_outputs, attn_probs
