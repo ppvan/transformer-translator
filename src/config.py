@@ -51,6 +51,7 @@ model = dict(
         weight_decay=1e-4,
     ),
     scheduler_config=dict(
-        gamma=0.9,
+        step_size=1,
+        gamma=0.2,
     ),
 )
