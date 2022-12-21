@@ -43,7 +43,7 @@ model = dict(
             max_seq_len=MAX_SEQ_LEN,
             dropout=0.1,
         ),
-        num_layers=6,
+        num_layers=3,
     ),
     adamw_config=dict(
         lr=4e-4,
