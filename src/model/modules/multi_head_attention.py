@@ -92,7 +92,7 @@ class MultiHeadAttention(nn.Module):
             attn_scores = attn_scores + (1 - mask) * -1e9
 
         attn_probs = torch.softmax(
-            attn_scores - attn_scores.max(-1, keepdim=True), dim=-1
+            attn_scores - attn_scores.max(-1, keepdim=True).values, dim=-1
         )  # stable softmax
         attn_probs = self.dropout(attn_probs)
         attn_outputs = torch.matmul(attn_probs, v)
