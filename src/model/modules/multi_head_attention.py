@@ -37,7 +37,7 @@ class MultiHeadAttention(nn.Module):
         self.proj_k = nn.Linear(d_model, d_model, bias=False)
         self.proj_v = nn.Linear(d_model, d_model, bias=False)
 
-        self.dropout = nn.Dropout(p=dropout, inplace=True)
+        self.dropout = nn.Dropout(p=dropout)
         self.layernorm = nn.LayerNorm(d_model)
 
         self.proj_o = nn.Linear(d_model, d_model)
@@ -91,9 +91,10 @@ class MultiHeadAttention(nn.Module):
             mask = self._get_query_key_mask(mask)
             attn_scores = attn_scores + (1 - mask) * -1e9
 
+        # stable softmax
         attn_probs = torch.softmax(
             attn_scores - attn_scores.max(-1, keepdim=True).values, dim=-1
-        )  # stable softmax
+        )
         attn_probs = self.dropout(attn_probs)
         attn_outputs = torch.matmul(attn_probs, v)
 
