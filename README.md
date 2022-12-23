@@ -23,4 +23,4 @@ python3 src/test.py --ckpt_path <path to checkpoint>
 where: 
 - `<path to checkpoint>` is the path to the checkpoint file you want to use. Default is `./checkpoints/last.ckpt`
 
-![Demo](./assets/demo.mkv)
+![Demo](./assets/demo.gif)
