@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument("--ckpt_path", type=str, default="checkpoints/last-v1.ckpt")
+    argparse.add_argument("--ckpt_path", type=str, default="checkpoints/last.ckpt")
     argparse.add_argument("--beam_size", type=int, default=0)
     argparse.add_argument("--max_len", type=int, default=50)
 

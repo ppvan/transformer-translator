@@ -16,6 +16,15 @@ python3 src/train.py \
     --accelerator gpu
 ```
 
+Or if you just want to try it out, you can download the checkpoint with following command:
+```bash
+#!/bin/bash
+fileid="1K6ULeDN4DIEdMF-Vo5EmLA4wHj4s7dfK"
+filename="checkpoints/last.ckpt"
+html=`curl -c ./cookie -s -L "https://drive.google.com/uc?export=download&id=${fileid}"`
+curl -Lb ./cookie "https://drive.google.com/uc?export=download&`echo ${html}|grep -Po '(confirm=[a-zA-Z0-9\-_]+)'`&id=${fileid}" -o ${filename}
+```
+
 After training, you can run the demo script to translate a sentence:
 ```bash
 python3 src/test.py --ckpt_path <path to checkpoint>
