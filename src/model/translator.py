@@ -1,5 +1,6 @@
 from .transformer import Encoder, Decoder
 from utils.scheduler import WarmUpScheduler
+from utils import PriorityQueue
 
 from typing import Optional
 import torch
@@ -141,7 +142,11 @@ class Translator(LightningModule):
             },
         }
 
+    @torch.no_grad()
     def greedy_translate(self, text: str, max_translation_length: int = 100):
+        training = self.training
+        self.eval()
+
         src_token_ids, src_attention_mask = self.src_tokenizer(
             text, return_token_type_ids=False, return_tensors="pt"
         ).values()
@@ -173,5 +178,95 @@ class Translator(LightningModule):
 
             if next_tgt_token_id == self.tgt_tokenizer.sep_token_id:
                 break
-
+        
+        self.train(training)
         return self.tgt_tokenizer.decode(tgt_token_ids[0], skip_special_tokens=True)
+
+    @torch.no_grad()
+    def beam_translate(self, text: str, max_translation_length: int = 50, beam_size: int = 3):
+        training = self.training
+        self.eval()
+
+        src_token_ids, src_attention_mask = self.src_tokenizer(
+            text, return_token_type_ids=False, return_tensors="pt"
+        ).values()
+
+        src_token_ids = src_token_ids.to(self.device)
+        src_attention_mask = src_attention_mask.to(self.device)
+
+        tgt_token_ids = torch.tensor([[self.tgt_tokenizer.cls_token_id]], device=self.device)
+        tgt_attention_mask = torch.tensor([[1]], device=self.device)
+
+        # =========================== #
+        heap = PriorityQueue(key=lambda x: x[0], mode="min")
+        heap.push((1.0, tgt_token_ids, tgt_attention_mask, False))
+
+        ret = []
+        for _ in range(max_translation_length):
+            # Keep track of the top k candidates
+            while len(heap) > beam_size:
+                heap.pop()
+
+            norm_prob = 0
+            mem = []
+
+            while not heap.empty():
+                # P(T1:Tn-1)
+                # tgt_token_ids.shape == (1, seq_len)
+                tgt_seq_prob, tgt_token_ids, tgt_attention_mask, completed = heap.pop()
+
+                if completed:
+                    ret.append(
+                        (tgt_seq_prob.item(), self.tgt_tokenizer.decode(tgt_token_ids.squeeze_(), skip_special_tokens=True))
+                    )
+
+                    if len(ret) == beam_size:
+                        return ret
+                    continue
+
+                norm_prob += tgt_seq_prob
+
+                logits = self(
+                    src_token_ids, tgt_token_ids, src_attention_mask, tgt_attention_mask
+                )
+
+                # (vocab_size,)
+                token_probs = torch.softmax(logits[:, -1, :], dim=-1).squeeze_()
+
+                # P(Tn | T1:Tn-1)
+                top_k_token_probs, top_k_token_ids = torch.topk(
+                    token_probs, beam_size, largest=True
+                )
+
+                for i in range(beam_size):
+                    next_token_id = top_k_token_ids[i]
+                    next_token_prob = top_k_token_probs[i]
+                    completed = next_token_id == self.tgt_tokenizer.sep_token_id
+
+                    mem.append(
+                        (
+                            tgt_seq_prob * next_token_prob,
+                            torch.cat((tgt_token_ids, next_token_id.view(1, 1)), dim=-1),
+                            torch.cat(
+                                (
+                                    tgt_attention_mask,
+                                    torch.tensor([[1]], device=self.device),
+                                ),
+                                dim=-1,
+                            ),
+                            completed,
+                        )
+                    )
+
+            for tgt_seq_prob, tgt_token_ids, tgt_attention_mask, completed in mem:
+                tgt_seq_prob /= norm_prob  # normalize
+                heap.push((tgt_seq_prob, tgt_token_ids, tgt_attention_mask, completed))
+
+        while len(ret) < beam_size and not heap.empty():
+            tgt_seq_prob, tgt_token_ids, tgt_attention_mask, completed = heap.pop()
+
+            decoded_seq = self.tgt_tokenizer.decode(tgt_token_ids[0], skip_special_tokens=True)
+            ret.append((tgt_seq_prob.item(), decoded_seq))
+
+        self.train(training)
+        return ret
