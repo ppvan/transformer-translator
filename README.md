@@ -4,6 +4,8 @@ This is a PyTorch implementation of the Transformer model described in the paper
 
 The model is trained to translate from English to Vietnamese on the [IWSLT 2015 dataset](https://sites.google.com/site/iwsltevaluation2015/mt-track?pli=1)
 
+Since limited GPU resources are available, I use pretrained BERT base as the encoder.
+
 ## Usage
 First, install the dependencies:
 ```
