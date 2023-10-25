@@ -5,8 +5,8 @@ import config
 from argparse import ArgumentParser
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
-from pytorch_lightning.loggers.wandb import WandbLogger
-from pytorch_lightning.utilities.seed import seed_everything
+from pytorch_lightning.loggers import CSVLogger
+from lightning_lite.utilities.seed import seed_everything
 from transformers import AutoTokenizer
 
 
@@ -34,10 +34,12 @@ def main():
         accelerator=args.accelerator,
         max_epochs=args.max_epochs,
         callbacks=[
-            ModelCheckpoint(args.ckpt_dir, monitor="val/acc", mode="max", save_last=True),
+            ModelCheckpoint(
+                args.ckpt_dir, monitor="val/acc", mode="max", save_last=True
+            ),
             LearningRateMonitor(logging_interval="step"),
         ],
-        logger=WandbLogger(project="Machine Translation", name="Transformer", version=0),
+        logger=CSVLogger("logs", name="Machine Translation"),
         gradient_clip_val=args.gradient_clip_val,
     )
 
